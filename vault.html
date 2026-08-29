@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>vault OS pro</title>
+
+<style>
+:root {
+  color-scheme: dark;
+  --bg: #080706;
+  --panel: rgba(18, 16, 14, 0.95);
+  --panel-strong: #14100f;
+  --accent: #c9a15d;
+  --accent-soft: rgba(201, 161, 93, 0.18);
+  --text: #f7f1e6;
+  --muted: #aaa49d;
+  --border: rgba(255, 255, 255, 0.07);
+}
+
+body {
+  margin: 0;
+  font-family: "Noto Sans JP", "Segoe UI", sans-serif;
+  background: radial-gradient(circle at top, rgba(201, 161, 93, 0.08), transparent 28%),
+              linear-gradient(180deg, #0b0a08 0%, #080706 45%, #080706 100%);
+  color: var(--text);
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background-image: radial-gradient(circle at 10% 20%, rgba(255, 255, 255, 0.04) 0%, transparent 40%),
+                    linear-gradient(90deg, rgba(255,255,255,0.03), transparent 50%, rgba(255,255,255,0.03));
+  pointer-events: none;
+}
+
+#login, #os {
+  min-height: 100vh;
+}
+
+#login {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.box {
+  background: rgba(20, 16, 14, 0.96);
+  padding: 32px;
+  width: min(460px, calc(100vw - 32px));
+  border-radius: 24px;
+  text-align: center;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(255,255,255,0.05);
+}
+
+.box h2 {
+  margin: 0 0 8px;
+  font-size: 2rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #f3e8d2;
+}
+
+.box p {
+  color: var(--muted);
+  font-size: 0.95rem;
+  line-height: 1.7;
+}
+
+#os {
+  display: none;
+}
+
+#bar {
+  background: rgba(15, 13, 12, 0.96);
+  padding: 14px 16px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+button {
+  padding: 10px 18px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  background: rgba(51, 41, 32, 0.92);
+  color: var(--text);
+  border-radius: 999px;
+  transition: transform 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06);
+}
+
+button:hover {
+  background: rgba(80, 64, 45, 0.96);
+  transform: translateY(-1px);
+}
+
+button.copied {
+  background: #c9a15d !important;
+  color: #181106 !important;
+  border-color: rgba(255,255,255,0.15) !important;
+}
+
+#main {
+  display: flex;
+  height: calc(100vh - 68px);
+  gap: 12px;
+  padding: 16px;
+}
+
+#left {
+  width: 280px;
+  background: linear-gradient(180deg, rgba(24, 20, 17, 0.96), rgba(14, 12, 10, 0.96));
+  padding: 18px;
+  overflow: auto;
+  border-radius: 24px;
+  border: 1px solid rgba(255,255,255,0.06);
+  box-shadow: inset 0 0 0 1px rgba(201, 161, 93, 0.05);
+}
+
+#right {
+  flex: 1;
+  padding: 18px;
+  overflow: auto;
+  background: rgba(15, 13, 12, 0.92);
+  border-radius: 24px;
+  border: 1px solid rgba(255,255,255,0.06);
+  box-shadow: inset 0 0 0 1px rgba(201, 161, 93, 0.05);
+}
+
+#left h3,
+#right h3 {
+  margin: 0 0 14px;
+  font-size: 1.1rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #f8eedc;
+}
+
+#left input,
+#right textarea {
+  font-family: "Noto Sans JP", "Segoe UI", sans-serif;
+}
+
+.file {
+  padding: 12px 14px;
+  cursor: pointer;
+  border-radius: 16px;
+  margin-bottom: 8px;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.04);
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.file:hover {
+  background: rgba(201, 161, 93, 0.12);
+  transform: translateX(2px);
+}
+
+.file.active {
+  background: rgba(201, 161, 93, 0.16);
+  border-color: rgba(201, 161, 93, 0.3);
+}
+
+textarea {
+  width: 100%;
+  min-height: 220px;
+  background: rgba(6, 4, 3, 0.95);
+  color: #e8dfc8;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  border: 1px solid rgba(255,255,255,0.08);
+  padding: 16px;
+  box-sizing: border-box;
+  border-radius: 16px;
+  resize: vertical;
+}
+
+#drop {
+  border: 1px dashed rgba(201, 161, 93, 0.35);
+  padding: 24px;
+  text-align: center;
+  margin-bottom: 14px;
+  color: #c8b798;
+  border-radius: 20px;
+  background: rgba(255,255,255,0.02);
+}
+
+#drop:hover {
+  background: rgba(201, 161, 93, 0.08);
+}
+
+img {
+  max-width: 100%;
+  margin-top: 16px;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 18px;
+}
+
+iframe {
+  width: 100%;
+  height: 420px;
+  background: #0f0d0b;
+  border: 1px solid rgba(255,255,255,0.08);
+  margin-top: 16px;
+  border-radius: 18px;
+}
+
+input[type="file"],
+input[type="password"] {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  color: var(--text);
+  border-radius: 14px;
+}
+
+input[type="password"]::placeholder {
+  color: rgba(255,255,255,0.5);
+}
+
+button:focus,
+input:focus,
+textarea:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(201, 161, 93, 0.18);
+}
+</style>
+</head>
+
+<body>
+
+<div id="login">
+<div class="box">
+<h2>vault OS pro</h2>
+<p style="color:#aaa; font-size:14px;">軍事・政府分野でも採用される暗号方式を基盤とした、高強度ローカル暗号化システム</p>
+<div style="text-align:left; margin-bottom:18px;">
+  <label style="font-size:12px; color:#aaa; display:block; margin-bottom:6px;">新規OS用パスワード</label>
+  <input type="password" id="newOSPassword" placeholder="パスワードを入力" style="width:100%; padding:10px; box-sizing:border-box; margin-bottom:10px; background:#000; color:#fff; border:1px solid #444; border-radius:12px;">
+  <button onclick="newOS()" style="background:#0066cc; width:100%;">新規作成 (空のOSを起動)</button>
+</div>
+<div style="border-top:1px solid #333; margin:15px 0; padding-top:15px; text-align:left;">
+  <label style="font-size:12px; color:#aaa; display:block; margin-bottom:5px;">暗号化ファイル(.sec)を選択:</label>
+  <input type="file" id="vaultFileInput" accept=".sec" style="width:100%; margin-bottom:10px;">
+  <input type="password" id="vaultPassword" placeholder="パスワード" style="width:100%; padding:8px; box-sizing:border-box; margin-bottom:10px; background:#000; color:#fff; border:1px solid #444; border-radius:12px;">
+  <button onclick="openOSFile()" style="background:#444; width:100%;">復号して開く</button>
+</div>
+</div>
+</div>
+
+<div id="os">
+
+<div id="bar">
+<button id="encBtn" onclick="encryptAndDownload()" style="background:#00aa55;">💾 暗号化してPCへ保存</button>
+<button onclick="lock()">LOCK (閉じる)</button>
+</div>
+
+<div id="main">
+
+<div id="left">
+<h3>Explorer</h3>
+<input type="file" id="fileInput" multiple style="width:100%; margin-bottom:10px;">
+<div id="list"></div>
+</div>
+
+<div id="right">
+
+<div id="drop">ここにファイルをドラッグ&ドロップで仮想OSに追加</div>
+
+<textarea id="editor"></textarea>
+<div style="display:flex; gap:10px; margin-top:5px;">
+  <button onclick="saveFile()" style="background:#0066cc;">仮想OS内に一時保存</button>
+  <button onclick="renameFile()" style="background:#e67e22;">名前変更</button>
+  <button onclick="deleteFile()" style="background:#cc3333;">ファイルを削除</button>
+</div>
+
+<h3>プレビュー</h3>
+<div id="preview"></div>
+
+</div>
+
+</div>
+</div>
+
+<script>
+
+/* =========================
+   STATE
+========================= */
+let files = {};
+let selected = null;
+let password = "";
+
+/* =========================
+   WORKER (暗号化ロジック)
+========================= */
+const worker = new Worker(URL.createObjectURL(new Blob([`
+self.onmessage = async (e)=>{
+const {files,pass,mode,blob} = e.data;
+const enc = new TextEncoder();
+const dec = new TextDecoder();
+
+async function key(pass,salt){
+    let base = await crypto.subtle.importKey("raw",enc.encode(pass),"PBKDF2",false,["deriveKey"]);
+    return crypto.subtle.deriveKey(
+        {name:"PBKDF2",salt,iterations:120000,hash:"SHA-256"},
+        base,
+        {name:"AES-GCM", length:256},
+        false,
+        ["encrypt","decrypt"]
+    );
+}
+
+async function gzip(input){
+    let cs = new CompressionStream("gzip");
+    let w = cs.writable.getWriter();
+    w.write(input);w.close();
+    return new Uint8Array(await new Response(cs.readable).arrayBuffer());
+}
+
+async function gunzip(input){
+    let ds = new DecompressionStream("gzip");
+    let w = ds.writable.getWriter();
+    w.write(input);w.close();
+    return new Uint8Array(await new Response(ds.readable).arrayBuffer());
+}
+
+if(mode==="enc"){
+    let salt = crypto.getRandomValues(new Uint8Array(16));
+    let iv = crypto.getRandomValues(new Uint8Array(12));
+    let k = await key(pass,salt);
+    let raw = enc.encode(JSON.stringify(files));
+    let comp = await gzip(raw);
+    let encData = await crypto.subtle.encrypt({name:"AES-GCM", iv},k,comp);
+    let res = {salt,iv,data:new Uint8Array(encData)};
+    self.postMessage(res,[res.data.buffer]);
+}
+
+if(mode==="dec"){
+    try {
+        let k = await key(pass,blob.salt);
+        let decData = await crypto.subtle.decrypt({name:"AES-GCM", iv:blob.iv},k,blob.data);
+        let decom = await gunzip(new Uint8Array(decData));
+        self.postMessage({success:true, files:JSON.parse(dec.decode(decom))});
+    } catch(err) {
+        self.postMessage({success:false});
+    }
+}
+};
+`], {type:"text/javascript"})));
+
+/* =========================
+   BASE64URL 変換
+========================= */
+function b64url(buf){
+let bin="";
+new Uint8Array(buf).forEach(b=>bin+=String.fromCharCode(b));
+return btoa(bin).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
+}
+
+function b64ToBytes(b64){
+b64 = b64.replace(/-/g,"+").replace(/_/g,"/");
+while(b64.length % 4) b64 += "=";
+let bin = atob(b64);
+let arr = new Uint8Array(bin.length);
+for(let i=0;i<bin.length;i++) arr[i]=bin.charCodeAt(i);
+return arr;
+}
+
+/* =========================
+   LOGIN
+========================= */
+
+function newOS(){
+  const newPasswordInput = document.getElementById("newOSPassword");
+  if(!newPasswordInput) return;
+  password = newPasswordInput.value.trim();
+  if(!password){
+    alert("新規OSのパスワードを入力してください。");
+    newPasswordInput.focus();
+    return;
+  }
+  files = {"Welcome.txt":"Secure OSへようこそ。ファイルを追加・編集したら、左上の「暗号化してPCへ保存」を押してファイルを保存してください。"};
+  newPasswordInput.value = "";
+  boot();
+}
+
+async function openOSFile(){
+const fileInput = document.getElementById("vaultFileInput");
+const passwordInput = document.getElementById("vaultPassword");
+
+if(fileInput.files.length === 0) {
+    alert("暗号化ファイル(.sec)を選択してください。");
+    return;
+}
+password = passwordInput.value;
+if(!password) {
+    alert("パスワードを入力してください。");
+    return;
+}
+
+const file = fileInput.files[0];
+const text = await file.text();
+
+let bytes = b64ToBytes(text);
+let blob = {
+    salt:bytes.slice(0,16),
+    iv:bytes.slice(16,28),
+    data:bytes.slice(28)
+};
+
+worker.postMessage({ mode:"dec", pass:password, blob });
+
+worker.onmessage = (e) => {
+    if(e.data.success) {
+        files = e.data.files;
+        boot();
+    } else {
+        alert("復号に失敗しました。パスワードが違うか、ファイルが壊れています。");
+    }
+};
+}
+
+function boot(){
+login.style.display="none";
+os.style.display="block";
+render();
+}
+
+/* =========================
+   RENDER
+========================= */
+function render(){
+list.innerHTML="";
+Object.keys(files).forEach(n=>{
+    let d=document.createElement("div");
+    d.className="file" + (selected === n ? " active" : "");
+    d.textContent=n;
+    d.onclick=()=>openFile(n);
+    list.appendChild(d);
+});
+}
+
+/* =========================
+   OPEN FILE
+========================= */
+function openFile(name){
+selected = name;
+render();
+preview.innerHTML="";
+editor.value = "";
+
+let f = files[name];
+
+if(typeof f === "string"){
+    editor.value = f;
+    editor.disabled = false;
+    
+    // HTMLファイルのプレビュー（実際の動作確認）
+    if(name.endsWith(".html") || name.endsWith(".htm")){
+        let iframe = document.createElement("iframe");
+        iframe.sandbox = "allow-scripts"; 
+        iframe.srcdoc = f;
+        preview.appendChild(iframe);
+    }
+    return;
+}
+
+if(f.t==="i"){
+    let blob = new Blob([new Uint8Array(f.d)]);
+    let url = URL.createObjectURL(blob);
+    let img = document.createElement("img");
+    img.src = url;
+    img.onload = ()=>URL.revokeObjectURL(url);
+    preview.appendChild(img);
+    
+    editor.value="[IMAGE FILE: 編集不可]";
+    editor.disabled = true;
+}
+}
+
+/* =========================
+   SAVE (仮想OS内の一時保存)
+========================= */
+function saveFile(){
+if(!selected) return;
+let f = files[selected];
+
+if(typeof f === "string"){
+    files[selected] = editor.value;
+    alert("仮想OS内で一時保存しました。「暗号化してPCへ保存」を押すとファイルが出力されます。");
+    openFile(selected);
+} else {
+    alert("画像ファイルはテキストエディタからは編集できません。");
+}
+}
+
+/* =========================
+   RENAME (【機能追加】ファイル名変更)
+========================= */
+function renameFile(){
+if(!selected) {
+    alert("名前を変更するファイルが選択されていません。");
+    return;
+}
+
+let oldName = selected;
+let newName = prompt("新しいファイル名を入力してください（拡張子も含む）", oldName);
+
+if(!newName || newName.trim() === "" || newName === oldName) {
+    return; // キャンセル、または名前が変わっていない場合は終了
+}
+
+if(files[newName]) {
+    alert("すでに同じ名前のファイルが存在します。");
+    return;
+}
+
+// データの移行処理（オブジェクトのキーを差し替える）
+files[newName] = files[oldName];
+delete files[oldName];
+
+selected = newName; // 選択状態を新しいファイル名にする
+render();
+openFile(newName);  // プレビューとエディタを再読み込み
+alert("ファイル名を変更しました。完全に確定させるには「暗号化してPCへ保存」を実行してください。");
+}
+
+/* =========================
+   DELETE (ファイルの削除)
+========================= */
+function deleteFile(){
+if(!selected) {
+    alert("削除するファイルが選択されていません。");
+    return;
+}
+
+if(confirm(`本当に「${selected}」を削除しますか？\n（完全に消去するには、削除後に再度「暗号化してPCへ保存」を行う必要があります）`)){
+    delete files[selected];
+    selected = null;
+    editor.value = "";
+    editor.disabled = false;
+    preview.innerHTML = "";
+    render();
+}
+}
+
+/* =========================
+   INPUT & DROP
+========================= */
+async function addFiles(fileList) {
+for(let f of fileList){
+    if(f.type.startsWith("image")){
+        files[f.name]={
+            t:"i",
+            d:Array.from(new Uint8Array(await f.arrayBuffer()))
+        };
+    }else{
+        files[f.name]=await f.text();
+    }
+}
+render();
+}
+
+fileInput.onchange = e => addFiles(e.target.files);
+drop.ondragover = e => e.preventDefault();
+drop.ondrop = e => { e.preventDefault(); addFiles(e.dataTransfer.files); };
+
+/* =========================
+   ENCRYPT & DOWNLOAD (疑似上書き保存)
+========================= */
+function encryptAndDownload(){
+worker.postMessage({ mode:"enc", files, pass:password });
+
+worker.onmessage = (e)=>{
+    let {salt,iv,data} = e.data;
+    let merged = new Uint8Array(salt.length + iv.length + data.length);
+    merged.set(salt,0);
+    merged.set(iv,16);
+    merged.set(data,28);
+
+    let out = b64url(merged.buffer);
+
+    // 擬似的なダウンロードリンクを作成して実行
+    const blob = new Blob([out], {type: "text/plain"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "vault.sec"; // デフォルトのファイル名
+    document.body.appendChild(a);
+    a.click();
+    
+    // 後片付け
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    const btn = document.getElementById("encBtn");
+    btn.classList.add("copied");
+    btn.textContent = "保存ダイアログ起動完了";
+    setTimeout(()=>{
+        btn.classList.remove("copied");
+        btn.textContent = "💾 暗号化してPCへ保存";
+    },1500);
+};
+}
+
+/* =========================
+   LOCK
+========================= */
+function lock(){
+location.reload();
+}
+</script>
+
+</body>
+</html>
